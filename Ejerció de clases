@@ -1,0 +1,71 @@
+import random
+
+# --- Datos iniciales ---
+meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
+         "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
+deptos = ["Ropa", "Deportes", "Juguetería"]
+
+# Generar tabla inicial con ventas aleatorias
+ventas = [[round(random.uniform(1000, 5000), 2) for _ in range(3)] for _ in range(12)]
+
+def mostrar_tabla():
+    print(f"\n{'MES':<12} | {'ROPA':>10} | {'DEPORTES':>10} | {'JUGUETERÍA':>10}")
+    print("-" * 55)
+    for i in range(12):
+        print(f"{meses[i]:<12} | {ventas[i][0]:>10.2f} | {ventas[i][1]:>10.2f} | {ventas[i][2]:>10.2f}")
+
+def obtener_coordenadas():
+    """Pide al usuario mes y departamento y devuelve sus índices."""
+    m_input = input("📅 Ingresa el nombre del mes: ").strip().capitalize()
+    d_input = input("🏷️  Ingresa el departamento (Ropa/Deportes/Juguetería): ").strip().capitalize()
+    
+    if m_input in meses and d_input in deptos:
+        return meses.index(m_input), deptos.index(d_input), m_input, d_input
+    else:
+        return None, None, None, None
+
+# --- Bucle Principal del Menú ---
+while True:
+    print("\n" + " SYSTEMA DE GESTIÓN DE VENTAS ".center(50, "="))
+    print("1. Ver tabla completa")
+    print("2. Modificar/Insertar un monto")
+    print("3. Buscar una venta específica")
+    print("4. Eliminar una venta (poner en 0)")
+    print("5. Salir")
+    
+    opcion = input("\nSelecciona una opción (1-5): ")
+
+    if opcion == "1":
+        mostrar_tabla()
+
+    elif opcion == "2":
+        fila, col, m, d = obtener_coordenadas()
+        if fila is not None:
+            nuevo_monto = float(input(f"💰 Ingresa el nuevo monto para {m} en {d}: "))
+            ventas[fila][col] = nuevo_monto
+            print(f"✅ ¡Actualizado! {m}-{d} ahora tiene ${nuevo_monto:,.2f}")
+        else:
+            print("❌ Error: Mes o departamento no válido.")
+
+    elif opcion == "3":
+        fila, col, m, d = obtener_coordenadas()
+        if fila is not None:
+            valor = ventas[fila][col]
+            print(f"🔍 Resultado: La venta de {d} en {m} es de ${valor:,.2f}")
+        else:
+            print("❌ Error: Datos no encontrados.")
+
+    elif opcion == "4":
+        fila, col, m, d = obtener_coordenadas()
+        if fila is not None:
+            ventas[fila][col] = 0.0
+            print(f"🗑️ Venta de {m} en {d} ha sido borrada (0.00).")
+        else:
+            print("❌ Error: No se pudo realizar la operación.")
+
+    elif opcion == "5":
+        print("👋 Saliendo del sistema... ¡Buen día!")
+        break
+    
+    else:
+        print("⚠ Opción no válida, intenta de nuevo.")
