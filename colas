@@ -1,0 +1,245 @@
+import tkinter as tk
+from tkinter import messagebox, ttk
+
+# ==========================================
+# 1. Clase Cola (Mantiene tu estructura original)
+# ==========================================
+class Cola:
+    def __init__(self, MAX):
+        self.MAX = MAX
+        self.frente = 0
+        self.final = 0
+        self.datos = [0] * MAX
+
+    def vacia(self):
+        return self.frente == self.final
+
+    def llena(self):
+        return self.final == self.MAX
+
+    def encolar(self, valor):
+        if not self.llena():
+            self.datos[self.final] = valor
+            self.final += 1
+            return True
+        return False
+
+    def desencolar(self):
+        if not self.vacia():
+            valor = self.datos[self.frente]
+            self.frente += 1
+            return valor
+        return None
+    
+    def cantidad(self):
+        return self.final - self.frente
+
+# ==========================================
+# 2. Aplicación con Monitor de Seguros Visual
+# ==========================================
+class AppSegurosSuma:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Sistema Pro de Colas - Seguros y Sumas")
+        self.root.geometry("1000x750")
+        self.root.config(bg="#f0f2f5")
+
+        # Variables de Suma
+        self.MAX_CAP = 10
+        self.colaA = Cola(self.MAX_CAP)
+        self.colaB = Cola(self.MAX_CAP)
+        self.resultados_especificos = {} 
+
+        # Variables de Seguros
+        self.seguros_colas = {}
+        self.seguros_tickets = {}
+
+        self.crear_interfaz()
+
+    def crear_interfaz(self):
+        self.tabs = ttk.Notebook(self.root)
+        self.t1 = ttk.Frame(self.tabs); self.t2 = ttk.Frame(self.tabs)
+        self.tabs.add(self.t1, text="  1. Sumar Filas (A y B)  ")
+        self.tabs.add(self.t2, text="  2. Compañía de Seguros  ")
+        self.tabs.pack(expand=True, fill="both")
+        
+        self.ui_tab_suma()
+        self.ui_tab_seguros()
+
+    # --- PESTAÑA 1: SUMA (LÓGICA ANTERIOR) ---
+    def ui_tab_suma(self):
+        frame = tk.Frame(self.t1, bg="#f0f2f5", padx=20, pady=10)
+        frame.pack(fill="both", expand=True)
+
+        panel_carga = tk.LabelFrame(frame, text=" Entrada de Datos ", bg="white", padx=15, pady=10)
+        panel_carga.pack(fill="x")
+
+        tk.Label(panel_carga, text="Nuevo en Cola A:", bg="white").grid(row=0, column=0)
+        self.ent_a = tk.Entry(panel_carga, width=10); self.ent_a.grid(row=0, column=1, padx=5)
+        self.ent_a.bind('<Return>', lambda e: self.add_a())
+
+        tk.Label(panel_carga, text="Nuevo en Cola B:", bg="white").grid(row=0, column=2, padx=20)
+        self.ent_b = tk.Entry(panel_carga, width=10); self.ent_b.grid(row=0, column=3, padx=5)
+        self.ent_b.bind('<Return>', lambda e: self.add_b())
+
+        panel_ops = tk.Frame(frame, bg="#f0f2f5", pady=15)
+        panel_ops.pack(fill="x")
+        tk.Button(panel_ops, text="Sumar Todo", bg="#4a69bd", fg="white", command=self.sumar_todo).pack(side="left", padx=5)
+        self.ent_pos = tk.Entry(panel_ops, width=5); self.ent_pos.pack(side="left", padx=5)
+        tk.Button(panel_ops, text="Sumar Fila Específica", bg="#60a3bc", fg="white", command=self.sumar_posicion).pack(side="left")
+        tk.Button(panel_ops, text="Reiniciar", command=self.reiniciar_suma).pack(side="right")
+
+        self.canvas = tk.Canvas(frame, bg="white", height=350, relief="ridge", border=2)
+        self.canvas.pack(fill="both", expand=True, pady=10)
+        self.dibujar_colas()
+
+    # (Funciones de suma omitidas por brevedad, son iguales a la versión anterior)
+    def add_a(self):
+        val = self.ent_a.get().strip()
+        if val.isdigit():
+            if self.colaA.encolar(int(val)): self.ent_a.delete(0, tk.END); self.dibujar_colas()
+    def add_b(self):
+        val = self.ent_b.get().strip()
+        if val.isdigit():
+            if self.colaB.encolar(int(val)): self.ent_b.delete(0, tk.END); self.dibujar_colas()
+    def sumar_todo(self):
+        self.resultados_especificos = {}
+        cant = min(self.colaA.cantidad(), self.colaB.cantidad())
+        for i in range(cant):
+            self.resultados_especificos[i] = self.colaA.datos[self.colaA.frente + i] + self.colaB.datos[self.colaB.frente + i]
+        self.dibujar_colas()
+    def sumar_posicion(self):
+        try:
+            pos = int(self.ent_pos.get().strip()) - 1
+            if 0 <= pos < self.colaA.cantidad() and 0 <= pos < self.colaB.cantidad():
+                self.resultados_especificos[pos] = self.colaA.datos[self.colaA.frente + pos] + self.colaB.datos[self.colaB.frente + pos]
+                self.dibujar_colas()
+        except: pass
+    def dibujar_colas(self):
+        self.canvas.delete("all")
+        self.graficar_estandar(self.colaA, 150, "Cola A", "#82ccdd")
+        self.graficar_estandar(self.colaB, 400, "Cola B", "#fad390")
+        self.graficar_resultados(650, "Resultado", "#b8e994")
+    def graficar_estandar(self, cola, x, titulo, color):
+        self.canvas.create_text(x, 25, text=titulo, font=("Arial", 11, "bold"))
+        y_ini = 60
+        for i in range(cola.frente, cola.final):
+            idx = i - cola.frente; y = y_ini + (idx * 40)
+            self.canvas.create_rectangle(x-40, y, x+40, y+30, fill=color, outline="#3c6382")
+            self.canvas.create_text(x, y+15, text=str(cola.datos[i]))
+    def graficar_resultados(self, x, titulo, color):
+        self.canvas.create_text(x, 25, text=titulo, font=("Arial", 11, "bold"))
+        y_ini = 60
+        for idx, val in self.resultados_especificos.items():
+            y = y_ini + (idx * 40)
+            self.canvas.create_rectangle(x-40, y, x+40, y+30, fill=color, outline="#27ae60")
+            self.canvas.create_text(x, y+15, text=str(val), font=("Arial", 10, "bold"))
+    def reiniciar_suma(self):
+        self.colaA = Cola(self.MAX_CAP); self.colaB = Cola(self.MAX_CAP); self.resultados_especificos = {}; self.dibujar_colas()
+
+    # --- PESTAÑA 2: SEGUROS (MONITOR VISUAL) ---
+    def ui_tab_seguros(self):
+        frame_main = tk.Frame(self.t2, bg="#f0f2f5", padx=20, pady=20)
+        frame_main.pack(fill="both", expand=True)
+
+        # 1. Título
+        tk.Label(frame_main, text="PANEL DE CONTROL DE SEGUROS", font=("Arial", 16, "bold"), bg="#f0f2f5", fg="#2c3e50").pack(pady=(0,20))
+
+        # 2. Contenedor Medio (Izquierda: Visual / Derecha: Consola)
+        content = tk.Frame(frame_main, bg="#f0f2f5")
+        content.pack(fill="both", expand=True)
+
+        # LADO IZQUIERDO: MONITOR VISUAL DE COLAS
+        self.visual_panel = tk.LabelFrame(content, text=" ESTADO DE COLAS EN TIEMPO REAL ", bg="white", padx=10, pady=10, font=("Arial", 10, "bold"))
+        self.visual_panel.pack(side="left", fill="both", expand=True, padx=(0, 10))
+        
+        # Mensaje si no hay colas
+        self.lbl_empty = tk.Label(self.visual_panel, text="Esperando registros...", fg="gray", bg="white", pady=50)
+        self.lbl_empty.pack()
+
+        # LADO DERECHO: LOG DE TEXTO
+        log_frame = tk.Frame(content, bg="#f0f2f5")
+        log_frame.pack(side="right", fill="both")
+        
+        tk.Label(log_frame, text="MONITOR DE EVENTOS", font=("Arial", 9, "bold"), bg="#f0f2f5").pack(anchor="w")
+        self.txt_log = tk.Text(log_frame, height=20, width=50, bg="#1e272e", fg="#d2dae2", font=("Consolas", 9))
+        self.txt_log.pack()
+
+        # 3. Panel Inferior: Entrada de Comandos
+        cmd_panel = tk.Frame(frame_main, bg="white", pady=15, relief="groove", bd=1)
+        cmd_panel.pack(fill="x", pady=(20, 0))
+        
+        tk.Label(cmd_panel, text="EJECUTAR COMANDO:", font=("Arial", 10, "bold"), bg="white").pack(side="left", padx=20)
+        self.ent_cmd = tk.Entry(cmd_panel, font=("Arial", 12), width=25)
+        self.ent_cmd.pack(side="left", padx=10)
+        self.ent_cmd.bind('<Return>', lambda e: self.gestionar_seguros())
+        
+        tk.Button(cmd_panel, text="PROCESAR", command=self.gestionar_seguros, bg="#ff3f34", fg="white", font=("Arial", 10, "bold"), padx=20).pack(side="left")
+        tk.Label(cmd_panel, text="Ejemplo: C 1 (Llega) / A 1 (Atender)", fg="gray", bg="white").pack(side="right", padx=20)
+
+    def gestionar_seguros(self):
+        entrada = self.ent_cmd.get().strip().upper()
+        self.ent_cmd.delete(0, tk.END)
+        try:
+            partes = entrada.split()
+            if len(partes) < 2: raise ValueError
+            cmd, srv = partes[0], partes[1]
+
+            if srv not in self.seguros_colas:
+                self.seguros_colas[srv] = Cola(20)
+                self.seguros_tickets[srv] = 0
+
+            if cmd == 'C':
+                self.seguros_tickets[srv] += 1
+                t = self.seguros_tickets[srv]
+                if self.seguros_colas[srv].encolar(t):
+                    self.log_s(f"REGISTRO: Servicio {srv} - Nuevo Cliente Ticket #{t}")
+                else: self.log_s(f"ERROR: Servicio {srv} lleno!")
+
+            elif cmd == 'A':
+                t = self.seguros_colas[srv].desencolar()
+                if t:
+                    self.log_s(f"LLAMANDO: Ticket #{t} al Módulo de Servicio {srv}", "#ffd32a")
+                else: self.log_s(f"AVISO: Servicio {srv} sin espera.", "#ff5e57")
+            
+            self.actualizar_monitor_visual()
+        except:
+            self.log_s("ERROR: Formato incorrecto. Use C [n] o A [n].")
+
+    def actualizar_monitor_visual(self):
+        # Limpiar panel
+        for widget in self.visual_panel.winfo_children():
+            widget.destroy()
+
+        if not self.seguros_colas:
+            tk.Label(self.visual_panel, text="No hay colas activas", bg="white").pack(pady=50)
+            return
+
+        # Dibujar cada cola como una tarjeta
+        for srv in sorted(self.seguros_colas.keys()):
+            cant = self.seguros_colas[srv].cantidad()
+            
+            # Contenedor de la tarjeta de servicio
+            card = tk.Frame(self.visual_panel, bg="#f8f9fa", bd=1, relief="solid", pady=10)
+            card.pack(fill="x", pady=5)
+            
+            tk.Label(card, text=f"SERVICIO {srv}", font=("Arial", 11, "bold"), bg="#f8f9fa", fg="#0984e3").pack(side="left", padx=15)
+            
+            # Mostrar cuántas personas hay
+            color_txt = "#27ae60" if cant < 5 else "#e67e22" if cant < 10 else "#c0392b"
+            tk.Label(card, text=f"EN ESPERA: {cant} personas", font=("Arial", 10), bg="#f8f9fa", fg=color_txt).pack(side="left", padx=20)
+            
+            # Barra de progreso visual
+            pb = ttk.Progressbar(card, maximum=20, length=150)
+            pb.pack(side="right", padx=15)
+            pb['value'] = cant
+
+    def log_s(self, m, color=None):
+        self.txt_log.config(state="normal")
+        self.txt_log.insert("end", f"> {m}\n")
+        self.txt_log.see("end"); self.txt_log.config(state="disabled")
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = AppSegurosSuma(root)
+    root.mainloop()
